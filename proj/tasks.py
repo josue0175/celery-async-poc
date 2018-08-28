@@ -5,6 +5,7 @@ from .RedisQueue import RedisQueue
 import time
 import json
 import requests
+import random
 
 logger = get_task_logger(__name__)
 q = RedisQueue('test')
@@ -13,10 +14,15 @@ q = RedisQueue('test')
 def celpost(self, argument, rdata):
     logger.info('celpost {0} + {1}'.format(argument, rdata))
     res=requests.post(argument, json=rdata)
+    total = random.randint(2,10)
+    for i in range(total):
+        self.update_state(state='PROGRESS',
+                          meta={'current': i, 'total': total})
+        time.sleep(1)
     #once result is ready then process
     #update db?
     #send location URL
-    print(res)
+    print("celpost: POST result %s" % res)
     return "Done"
 
 @app.task

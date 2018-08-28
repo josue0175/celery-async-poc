@@ -32,41 +32,47 @@ def rfSendEvents():
     print("sendEvents: GET /sendTestEvent hit")
     print("sendEvents: Now send POST to subscriper")
     #res=requests.post('http://localhost:5001/tests/endpoint', json=rdata)
-    tcall=tasks.celpost.delay('http://localhost:5001/tests/endpoint',rdata)
+    tcall=tasks.celpost.apply_async(args=['http://localhost:5001/tests/endpoint',rdata],countdown=2)
     task=tasks.celpost.AsyncResult(tcall.id)
-    if task.state == 'PENDING':
-        # job did not start yet
-        response = {
-            'state': task.state,
-            'current': 0,
-            'total': 1,
-            'status': 'Pending...'
-        }
-    elif task.state != 'FAILURE':
-        response = {
-            'state': task.state,
-            'current': task.info.get('current', 0),
-            'total': task.info.get('total', 1),
-            'status': task.info.get('status', '')
-        }
-        if 'result' in task.info:
-            response['result'] = task.info['result']
-    else:
-        # something went wrong in the background job
-        response = {
-            'state': task.state,
-            'current': 1,
-            'total': 1,
-            'status': str(task.info),  # this is the exception raised
-        }
+    print("state %s" % task.state)
+#    if task.state == 'PENDING':
+#        # job did not start yet
+#        response = {
+#            'state': task.state,
+#            'current': 0,
+#            'total': 1,
+#            'status': 'Pending...'
+#        }
+#    elif task.state != 'FAILURE':
+#        response = {
+#            'state': task.state,
+#            'current': task.info.get('current', 0),
+#            'total': task.info.get('total', 1),
+#            'status': task.info.get('status', '')
+#        }
+#        if 'result' in task.info:
+#            response['result'] = task.info['result']
+#    else:
+#        # something went wrong in the background job
+#        response = {
+#            'state': task.state,
+#            'current': 1,
+#            'total': 1,
+#            'status': str(task.info),  # this is the exception raised
+#        }
+    #print("sendEvents: response from server %s" % res)
+    #print("sendEvents: json response %s" % res.json())
+
+#WORKING BELOW
     r=None
     while not r=='SUCCESS':
         r=task.state
         print("state %s" % r)
+        print("task %s" % task.info)
         time.sleep(0.4)
-    print("sendEvents: response %s" % response)
-    #print("sendEvents: response from server %s" % res)
-    #print("sendEvents: json response %s" % res.json())
+
+    print("sendEvents: state %s" % task.state)
+    print("sendEvents: response %s" % task.info)
     return "Got response"
 
 
