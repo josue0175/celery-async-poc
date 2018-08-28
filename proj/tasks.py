@@ -14,7 +14,7 @@ q = RedisQueue('test')
 def celpost(self, argument, rdata):
     logger.info('celpost {0} + {1}'.format(argument, rdata))
     res=requests.post(argument, json=rdata)
-    total = random.randint(2,10)
+    total = random.randint(8,12)
     for i in range(total):
         self.update_state(state='PROGRESS',
                           meta={'current': i, 'total': total})
@@ -23,7 +23,7 @@ def celpost(self, argument, rdata):
     #update db?
     #send location URL
     print("celpost: POST result %s" % res)
-    return "Done"
+    return {'current': 100, 'total': 100}
 
 @app.task
 def add(x, y):

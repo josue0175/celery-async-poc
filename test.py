@@ -1,6 +1,6 @@
 from proj import tasks
 from flask import Flask
-from flask import request, Response
+from flask import request, Response, jsonify, url_for
 import json
 import os, re
 from proj.RedisQueue import RedisQueue
@@ -63,18 +63,52 @@ def rfSendEvents():
     #print("sendEvents: response from server %s" % res)
     #print("sendEvents: json response %s" % res.json())
 
+    print("taskid %s" % tcall.id)
+
+    return jsonify({}), 202, {'Location': url_for('taskstatus', task_id=tcall.id)}
+
 #WORKING BELOW
-    r=None
-    while not r=='SUCCESS':
-        r=task.state
-        print("state %s" % r)
-        print("task %s" % task.info)
-        time.sleep(0.4)
+#    r=None
+#    while not r=='SUCCESS':
+#        r=task.state
+#        print("state %s" % r)
+#        print("task %s" % task.info)
+#        time.sleep(0.4)
+#
+#    print("sendEvents: state %s" % task.state)
+#    print("sendEvents: response %s" % task.info)
+#    return "Got response"
 
-    print("sendEvents: state %s" % task.state)
-    print("sendEvents: response %s" % task.info)
-    return "Got response"
 
+@flask_app.route('/status/<task_id>')
+def taskstatus(task_id):
+    task=tasks.celpost.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info['current'],
+            'total': task.info['total'],
+            #'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
 
 def _test(argument):
     return "TEST: %s" % argument
