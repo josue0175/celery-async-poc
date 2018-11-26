@@ -12,10 +12,11 @@ q = RedisQueue('test')
 
 @app.task(bind=True)
 def celpost(self, argument, rdata):
-    logger.info('celpost {0} + {1}'.format(argument, rdata))
+    logger.info('celpost args: {0} + {1}'.format(argument, rdata))
     res=requests.post(argument, json=rdata)
     total = random.randint(8,12)
     for i in range(total):
+        logger.info('celpost update: {0} + {1}'.format(i, total))
         self.update_state(state='PROGRESS',
                           meta={'current': i, 'total': total})
         time.sleep(1)
